@@ -7,12 +7,18 @@ from restclient import POST,GET
 import os.path
 import sys
 import os
+import urllib2
+from poster.encode import multipart_encode
+from poster.streaminghttp import register_openers
+
+import base64
 
 class PCP:
     def __init__(self,base_url,username,password):
         self.BASE = base_url
         self.credentials = (username,password)
         self.session = None
+        register_openers()
         
     def get_session(self):
         if not self.session:
@@ -59,21 +65,23 @@ class PCP:
 
         # we have to set the workflow uuid first, in a separate request
         self.select_workflow(workflow_uuid)
-        # now we can actually do the upload
-        params = dict(
-            title=title,
-            workflow_select=workflow_uuid, # probably redundant
-            description=description)
-        content = POST(self.BASE + "capture/file_upload",
-                       params=params,
-                       files={'source_file' : 
-                              {'file' : open(filepath).read(),
-                               'filename' : os.path.basename(filepath)}},
-                       credentials=self.credentials,
-                       headers={'Cookie' : "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2"},
-                       async=False
-                       )
-        # if it succeeds, it doesn't actually return anything
+
+        # now we prepare the upload
+        datagen,headers = multipart_encode(dict(
+                title=title,
+                workflow_select=workflow_uuid, # probably redundant
+                description=description,
+                source_file=open(filepath)
+            ))
+        request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
+
+        # set up credentials
+        base64string = base64.encodestring("%s:%s" % self.credentials)[:-1]
+        request.add_header("Authorization", "Basic %s" % base64string)
+        request.add_header("Cookie", "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2")
+
+        # and make the actual POST
+        content = urllib2.urlopen(request).read()
 
 if __name__ == "__main__":
     # some simple command line stuff for testing
