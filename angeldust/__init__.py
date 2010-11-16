@@ -54,7 +54,7 @@ class PCP:
              headers={'Cookie' : "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2"},
              async=False)
 
-    def upload_file(self,filepath,workflow_uuid,title="",description=""):
+    def upload_file(self,fileobj,filename,workflow_uuid,title="",description=""):
         # BIG GOTCHA HERE:
         # the workflow is set in a separate request from the upload
         # and state is maintained on the server. 
@@ -68,12 +68,11 @@ class PCP:
         self.select_workflow(workflow_uuid)
 
         # now we prepare the upload
-        f = open(filepath)
         datagen,headers = multipart_encode(dict(
                 title=title,
                 workflow_select=workflow_uuid, # probably redundant
                 description=description,
-                source_file={'file' : f, 'filename' : os.path.basename(filepath)}
+                source_file={'file' : fileobj, 'filename' : filename}
             ))
         request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
 
@@ -107,7 +106,7 @@ if __name__ == "__main__":
         uuid = sys.argv[3]
         title = sys.argv[4]
         description = sys.argv[5]
-        pcp.upload_file(filename,uuid,title,description)
+        pcp.upload_file(open(filename),os.path.basename(filename),uuid,title,description)
     else:
         print "unknown command"
 
