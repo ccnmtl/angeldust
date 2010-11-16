@@ -67,11 +67,12 @@ class PCP:
         self.select_workflow(workflow_uuid)
 
         # now we prepare the upload
+        f = open(filepath)
         datagen,headers = multipart_encode(dict(
                 title=title,
                 workflow_select=workflow_uuid, # probably redundant
                 description=description,
-                source_file=open(filepath)
+                source_file={'file' : f, 'filename' : os.path.basename(filepath)}
             ))
         request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
 
