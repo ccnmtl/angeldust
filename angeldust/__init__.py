@@ -24,15 +24,16 @@ class PCP:
         if not self.session:
             # need to login
             resp,contents = POST(self.BASE + "capture/login",
-                                 params =                              {
+                                 params = {
                     'authenticating_user' : self.credentials[0],
                     'commit' : 'Log In',
                     'password' : self.credentials[1],
                     },
+                                 # it ignores the login if it's not via AJAX
                                  headers = {'X-Requested-With' : 'XMLHttpRequest'},
                                  credentials=self.credentials,
                                  resp = True,
-                                 async=False)
+                                 async = False)
 
             cookie_string = resp['set-cookie']
             #quick and dirty parsing
