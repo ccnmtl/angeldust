@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="angeldust",
-    version="0.1.1",
+    version="0.1.2",
     author="Anders Pearson",
     author_email="anders@columbia.edu",
     url="http://github.com/ccnmtl/angeldust/",
