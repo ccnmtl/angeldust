@@ -10,6 +10,7 @@ import os
 import urllib2
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
+from poster.encode import MultipartParam
 
 import base64
 
@@ -66,13 +67,13 @@ class PCP:
 
         # we have to set the workflow uuid first, in a separate request
         self.select_workflow(workflow_uuid)
-
         # now we prepare the upload
-        datagen,headers = multipart_encode(dict(
-                title=title,
-                workflow_select=workflow_uuid, # probably redundant
-                description=description,
-                source_file={'file' : fileobj, 'filename' : filename}
+
+        datagen,headers = multipart_encode((
+                ("title",title),
+                ("workflow_select",workflow_uuid), # probably redundant
+                ("description",description),
+                MultipartParam(name="source_file",fileobj=fileobj,filename=filename)
             ))
         request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
 
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         uuid = sys.argv[3]
         title = sys.argv[4]
         description = sys.argv[5]
-        pcp.upload_file(open(filename),os.path.basename(filename),uuid,title,description)
+        pcp.upload_file(open(filename,"rb"),os.path.basename(filename),uuid,title,description)
     else:
         print "unknown command"
 
