@@ -69,21 +69,38 @@ class PCP:
         self.select_workflow(workflow_uuid)
         # now we prepare the upload
 
-        datagen,headers = multipart_encode((
-                ("title",title),
-                ("workflow_select",workflow_uuid), # probably redundant
-                ("description",description),
-                MultipartParam(name="source_file",fileobj=fileobj,filename=filename)
-            ))
-        request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
+        test = "restclient!"
+        if test == "restclient":
+            params = dict(
+                title=title,
+                workflow_select=workflow_uuid, # probably redundant
+                description=description)
+            content = POST(self.BASE + "capture/file_upload",
+                           params=params,
+                           files={'source_file' : 
+                                  {'file' : fileobj.read(),
+                                   'filename' : filename}},
+                           credentials=self.credentials,
+    #                       headers={'Cookie' : "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2"},
+                           async=False
+                           )
 
-        # set up credentials
-        base64string = base64.encodestring("%s:%s" % self.credentials)[:-1]
-        request.add_header("Authorization", "Basic %s" % base64string)
-        request.add_header("Cookie", "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2")
+        else:
+            datagen,headers = multipart_encode((
+                    ("title",title),
+                    ("workflow_select",workflow_uuid), # probably redundant
+                    ("description",description),
+                    MultipartParam(name="source_file",fileobj=fileobj,filename=filename)
+                ))
+            request = urllib2.Request(self.BASE + "capture/file_upload", datagen, headers)
 
-        # and make the actual POST
-        content = urllib2.urlopen(request).read()
+            # set up credentials
+            base64string = base64.encodestring("%s:%s" % self.credentials)[:-1]
+            request.add_header("Authorization", "Basic %s" % base64string)
+            request.add_header("Cookie", "_session_id=" + self.get_session() + "; BALANCEID=balancer.mongrel2")
+
+            # and make the actual POST
+            content = urllib2.urlopen(request).read()
 
 if __name__ == "__main__":
     # some simple command line stuff for testing
